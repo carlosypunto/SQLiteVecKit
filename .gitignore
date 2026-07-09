@@ -1,0 +1,18 @@
+.DS_Store
+/.build
+/.swiftpm
+
+# Xcode (if the package is opened/built standalone)
+xcuserdata/
+DerivedData/
+
+# Scratch databases from local experiments (tests use the tmp dir)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# Claude Code local (per-machine) files
+CLAUDE.local.md
+.claude/settings.local.json

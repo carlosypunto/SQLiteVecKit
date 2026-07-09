@@ -1,0 +1,4 @@
+# sqlite-vec vendored source -- pinned to v0.1.9
+# Regenerate with: scripts/vendor-sqlite-vec.sh update
+ba081a47fa02eadc3cf6b16c314b695b84081269349aac722b4efa338fe8fd85  sqlite-vec.c
+8e4d7bfcd779c89bd19a6b2959fce24ee391b2eaf79a85a979377a36627cb060  sqlite-vec.h

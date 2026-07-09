@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+# Local pre-push hook: refuse to push if the vendored sqlite-vec source has
+# drifted from its checksum lock (Sources/CSQLiteVec/checksums.lock).
+#
+# Opt in (per clone, not forced by this repo):
+#   git config core.hooksPath .githooks
+#
+set -euo pipefail
+
+if ! ./scripts/check-repository-hygiene.sh; then
+  echo "ERROR: pre-push: repository hygiene check failed. Push aborted." >&2
+  exit 1
+fi
+
+if ! ./scripts/vendor-sqlite-vec.sh verify; then
+  echo "ERROR: pre-push: vendored sqlite-vec source failed verification. Push aborted." >&2
+  exit 1
+fi

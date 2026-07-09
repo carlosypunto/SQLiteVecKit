@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    # arm64 runner: the release test run actually exercises the NEON fast paths.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 16 (Swift 6 toolchain)
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+      - name: Build (debug)
+        run: swift build
+      - name: Build (release)
+        run: swift build -c release
+      - name: Test (debug)
+        run: swift test
+      - name: Test (release, NEON-vs-scalar gate)
+        run: swift test -c release

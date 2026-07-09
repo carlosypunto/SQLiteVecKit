@@ -1,0 +1,17 @@
+name: Repository hygiene
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check repository hygiene
+        run: ./scripts/check-repository-hygiene.sh

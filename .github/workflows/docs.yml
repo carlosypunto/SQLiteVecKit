@@ -1,0 +1,64 @@
+name: Docs
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Documentation gate: unresolved symbol links, malformed directives, or any
+  # other docc warning fails the build — the docs equivalent of `swift test`.
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 16 (Swift 6 toolchain)
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+      - name: Build documentation (docc warnings as errors)
+        run: |
+          xcodebuild docbuild -scheme SQLiteVecKit \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath /tmp/docbuild \
+            OTHER_DOCC_FLAGS='--warnings-as-errors'
+      - name: Transform for static hosting
+        if: github.event_name == 'push'
+        run: |
+          xcrun docc process-archive transform-for-static-hosting \
+            /tmp/docbuild/Build/Products/Debug/SQLiteVecStore.doccarchive \
+            --output-path docs-site \
+            --hosting-base-path SQLiteVecKit
+          cat > docs-site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+            <head><meta http-equiv="refresh" content="0; url=/SQLiteVecKit/documentation/sqlitevecstore/"></head>
+            <body><a href="/SQLiteVecKit/documentation/sqlitevecstore/">SQLiteVecStore documentation</a></body>
+          </html>
+          EOF
+      - name: Upload Pages artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-site
+
+  # Publishes to GitHub Pages. Requires Settings > Pages > Source: "GitHub Actions".
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

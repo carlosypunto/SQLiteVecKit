@@ -1,0 +1,17 @@
+name: Vendor check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-vendored-sqlite-vec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify vendored sqlite-vec against checksums.lock
+        run: ./scripts/vendor-sqlite-vec.sh verify
