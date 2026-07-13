@@ -6,6 +6,10 @@ import CSQLiteVec
 extension VectorStore {
     /// Reads a full row back, including the stored embedding.
     /// Returns nil if no row with the given id exists.
+    ///
+    /// - Parameter id: Row identifier to fetch.
+    /// - Returns: The stored entry, or `nil` when no row has that id.
+    /// - Throws: ``SQLiteError`` if the underlying query fails.
     public func fetch(id: Int) throws -> VectorEntry? {
         let sql = "SELECT content, source, metadata, embedding FROM \(tableName) WHERE id = ?;"
         return try withStatement(sql) { ptr, statement in
@@ -40,6 +44,11 @@ extension VectorStore {
 
     /// Replaces content, source, metadata, and embedding of an existing row.
     /// Throws `SQLiteError.rowNotFound` if the id does not exist.
+    ///
+    /// - Parameter entry: Replacement row. Its `id` selects the row to update.
+    /// - Throws: ``SQLiteError/rowNotFound(id:)`` when the id is missing,
+    ///   ``SQLiteError/dimensionMismatch(expected:got:)``,
+    ///   ``SQLiteError/metadataTooLarge(limit:got:)``, or a SQLite write error.
     public func update(_ entry: VectorEntry) throws {
         try validateDimension(of: entry.vector)
         try validateMetadata(entry.metadata)
@@ -83,6 +92,10 @@ extension VectorStore {
     /// Inserts the entry, replacing any existing row with the same id.
     /// Implemented as DELETE + INSERT in one transaction because
     /// `INSERT OR REPLACE` is broken on vec0 tables (upstream issue #259).
+    ///
+    /// - Parameter entry: Row to insert or replace.
+    /// - Throws: ``SQLiteError/dimensionMismatch(expected:got:)``,
+    ///   ``SQLiteError/metadataTooLarge(limit:got:)``, or a SQLite write error.
     public func upsert(_ entry: VectorEntry) throws {
         try validateDimension(of: entry.vector)
         try validateMetadata(entry.metadata)
@@ -93,6 +106,9 @@ extension VectorStore {
     }
 
     /// Deletes the row with the given id. Deleting a nonexistent id is a no-op.
+    ///
+    /// - Parameter id: Row identifier to delete.
+    /// - Throws: ``SQLiteError`` if the underlying delete fails.
     public func delete(id: Int) throws {
         var statements = ["DELETE FROM \(tableName) WHERE id = ?;"]
         if lexicalSearch {
@@ -113,6 +129,9 @@ extension VectorStore {
 
     /// Deletes every row with the given source (e.g. to re-ingest one document).
     /// Deleting a source with no rows is a no-op.
+    ///
+    /// - Parameter source: Source label whose rows should be removed.
+    /// - Throws: ``SQLiteError`` if the underlying delete fails.
     public func delete(source: String) throws {
         // FTS rows first: the subquery needs the vec0 rows still present.
         var statements: [String] = []
@@ -137,6 +156,8 @@ extension VectorStore {
     }
 
     /// Removes every row from the store.
+    ///
+    /// - Throws: ``SQLiteError`` if the underlying delete fails.
     public func deleteAll() throws {
         try withTransaction {
             try executeRaw("DELETE FROM \(tableName);")
@@ -147,6 +168,10 @@ extension VectorStore {
     }
 
     /// Returns true if a row with the given id exists.
+    ///
+    /// - Parameter id: Row identifier to test.
+    /// - Returns: `true` when the row exists; otherwise `false`.
+    /// - Throws: ``SQLiteError`` if the underlying query fails.
     public func contains(id: Int) throws -> Bool {
         try withStatement("SELECT 1 FROM \(tableName) WHERE id = ? LIMIT 1;") { ptr, statement in
             sqlite3_bind_int64(statement, 1, Int64(id))
@@ -160,6 +185,9 @@ extension VectorStore {
     }
 
     /// Number of rows in the store.
+    ///
+    /// - Returns: Total row count.
+    /// - Throws: ``SQLiteError`` if the underlying query fails.
     public func count() throws -> Int {
         try withStatement("SELECT count(*) FROM \(tableName);") { ptr, statement in
             let stepCode = sqlite3_step(statement)
@@ -171,6 +199,10 @@ extension VectorStore {
     }
 
     /// Number of rows with the given source.
+    ///
+    /// - Parameter source: Source label to count.
+    /// - Returns: Number of rows whose source equals `source`.
+    /// - Throws: ``SQLiteError`` if the underlying query fails.
     public func count(source: String) throws -> Int {
         try withStatement("SELECT count(*) FROM \(tableName) WHERE source = ?;") { ptr, statement in
             sqlite3_bind_text(statement, 1, source, -1, SQLITE_TRANSIENT)

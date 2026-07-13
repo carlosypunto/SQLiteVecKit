@@ -11,13 +11,17 @@ extension VectorStore {
     ///   - topK: Number of neighbors, in `1...maxTopK`.
     ///   - source: Restricts the search to rows with that source. Applied
     ///     *inside* the KNN query, so `topK` counts only matching rows.
-    ///   - sqlWhere: Optional SQL fragment applied *after* the KNN selection
-    ///     (post-filter: fewer than `topK` rows may come back — raise `topK`
-    ///     when filtering). It sees the columns `id`, `content`, `source`,
-    ///     `metadata`, `distance`. Write values as `?` placeholders and pass
-    ///     them in `bindings` — never interpolate values into the fragment.
+    ///   - sqlWhere: Optional SQL fragment passed with the public `where:`
+    ///     argument and applied *after* the KNN selection (post-filter: fewer
+    ///     than `topK` rows may come back; raise `topK` when filtering). It
+    ///     sees the columns `id`, `content`, `source`, `metadata`, `distance`.
+    ///     Write values as `?` placeholders and pass them in `bindings`; never
+    ///     interpolate values into the fragment.
     ///     Example: `where: "json_extract(metadata, '$.page') > ?", bindings: [.int(10)]`.
     ///   - bindings: Values for the fragment's `?` placeholders, in order.
+    /// - Returns: Matching rows ordered by ascending distance.
+    /// - Throws: ``SQLiteError/dimensionMismatch(expected:got:)``,
+    ///   ``SQLiteError/invalidTopK(_:)``, or a SQLite query error.
     public func search(
         vector: [Float],
         topK: Int = 5,
@@ -66,6 +70,16 @@ extension VectorStore {
 
     /// `[Double]` convenience; converted to `[Float]` (sqlite-vec stores float32).
     /// Disfavored so numeric-literal arrays keep resolving to the [Float] overload.
+    ///
+    /// - Parameters:
+    ///   - vector: Query embedding converted with `Float.init`.
+    ///   - topK: Number of neighbors, in `1...maxTopK`.
+    ///   - source: Restricts the search to rows with that source.
+    ///   - sqlWhere: Optional SQL fragment passed with the public `where:` argument.
+    ///   - bindings: Values for the fragment's `?` placeholders, in order.
+    /// - Returns: Matching rows ordered by ascending distance.
+    /// - Throws: ``SQLiteError/dimensionMismatch(expected:got:)``,
+    ///   ``SQLiteError/invalidTopK(_:)``, or a SQLite query error.
     @_disfavoredOverload
     public func search(
         vector: [Double],
@@ -91,6 +105,17 @@ extension VectorStore {
     /// Bare column names (`id`, `source`, `metadata`) resolve to the vec0
     /// table; only `content` is ambiguous in the FTS join — qualify it as
     /// `c.content`. Values go in `bindings`.
+    ///
+    /// - Parameters:
+    ///   - query: FTS5 query string.
+    ///   - topK: Number of lexical hits, in `1...maxTopK`.
+    ///   - source: Restricts the search to rows with that source.
+    ///   - sqlWhere: Optional SQL fragment passed with the public `where:` argument.
+    ///   - bindings: Values for the fragment's `?` placeholders, in order.
+    /// - Returns: Matching rows ordered by ascending BM25 score.
+    /// - Throws: ``SQLiteError/lexicalSearchDisabled``,
+    ///   ``SQLiteError/invalidTopK(_:)``,
+    ///   ``SQLiteError/invalidTextQuery(_:detail:)``, or a SQLite query error.
     public func searchText(
         _ query: String,
         topK: Int = 5,
@@ -140,6 +165,19 @@ extension VectorStore {
     /// the fragment must be valid in both contexts: use the bare column names
     /// (`metadata`, `source`, …) qualified nowhere — they resolve in the KNN
     /// post-filter — and avoid `content`, which is ambiguous in the FTS join.
+    ///
+    /// - Parameters:
+    ///   - text: FTS5 query string for the lexical half.
+    ///   - vector: Query embedding for the vector half.
+    ///   - topK: Number of fused hits, in `1...maxTopK`.
+    ///   - source: Restricts both underlying searches to rows with that source.
+    ///   - sqlWhere: Optional SQL fragment passed with the public `where:` argument.
+    ///   - bindings: Values for the fragment's `?` placeholders, in order.
+    /// - Returns: Fused results ordered by descending RRF score.
+    /// - Throws: ``SQLiteError/lexicalSearchDisabled``,
+    ///   ``SQLiteError/dimensionMismatch(expected:got:)``,
+    ///   ``SQLiteError/invalidTopK(_:)``,
+    ///   ``SQLiteError/invalidTextQuery(_:detail:)``, or a SQLite query error.
     public func searchHybrid(
         text: String,
         vector: [Float],
@@ -202,6 +240,19 @@ extension VectorStore {
     }
 
     /// `[Double]` convenience; converted to `[Float]` (sqlite-vec stores float32).
+    ///
+    /// - Parameters:
+    ///   - text: FTS5 query string for the lexical half.
+    ///   - vector: Query embedding converted with `Float.init`.
+    ///   - topK: Number of fused hits, in `1...maxTopK`.
+    ///   - source: Restricts both underlying searches to rows with that source.
+    ///   - sqlWhere: Optional SQL fragment passed with the public `where:` argument.
+    ///   - bindings: Values for the fragment's `?` placeholders, in order.
+    /// - Returns: Fused results ordered by descending RRF score.
+    /// - Throws: ``SQLiteError/lexicalSearchDisabled``,
+    ///   ``SQLiteError/dimensionMismatch(expected:got:)``,
+    ///   ``SQLiteError/invalidTopK(_:)``,
+    ///   ``SQLiteError/invalidTextQuery(_:detail:)``, or a SQLite query error.
     @_disfavoredOverload
     public func searchHybrid(
         text: String,

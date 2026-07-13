@@ -375,13 +375,20 @@ The benchmark prints hardware, build configuration, row counts, and timings for 
 
 ## Documentation
 
-The API is fully documented with DocC: Quick Help (⌥-click) and autocomplete show it immediately, and **Product > Build Documentation** in Xcode renders the full catalog — a Getting Started article plus guides on embedding-space manifests, searching & filtering, the schema lifecycle, and raw SQL conventions. The code examples in the docs are mirrored by compilable snippets under `Snippets/`, so `swift build` guarantees they stay in sync with the API; CI validates the docs themselves (broken links fail the build) and publishes them to GitHub Pages on every push to main. Hosted docs are also available via the [Swift Package Index](https://swiftpackageindex.com) once the package is listed there (`.spi.yml` is in place).
+The API is documented with DocC: Quick Help (⌥-click) and autocomplete show inline comments for the public API, and **Product > Build Documentation** in Xcode renders the full catalog — a Getting Started article plus guides on embedding-space manifests, searching & filtering, the schema lifecycle, and raw SQL conventions.
+
+The code examples in the docs are mirrored by compilable snippets under `Snippets/`, so `swift build` guarantees they stay in sync with the API. CI validates the docs themselves (broken symbol links and DocC warnings fail the build) and publishes the current `main` documentation to GitHub Pages on every push. Hosted docs are also available via the [Swift Package Index](https://swiftpackageindex.com) once the package is listed there (`.spi.yml` is in place).
+
+Documentation is versioned in two layers:
+
+- Source comments, DocC articles, README, and snippets are ordinary repository files, so every commit records the documentation state.
+- Consumers pinned to a SwiftPM version see the inline docs and DocC catalog from that tag. Documentation-only improvements should normally ship as a patch release (for example `0.1.1`), while GitHub Pages can continue showing the latest `main` docs between releases.
 
 Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Versioning
 
-Releases follow [SemVer](https://semver.org); see [CHANGELOG.md](CHANGELOG.md) for the release history. The version number covers the wrapper's Swift API and the on-disk layout it generates — independent of the bundled sqlite-vec's own pre-1.0 status (policy in [DECISIONS.md](DECISIONS.md) #4).
+Releases follow [SemVer](https://semver.org); see [CHANGELOG.md](CHANGELOG.md) for the release history. The version number covers the wrapper's Swift API and the on-disk layout it generates — independent of the bundled sqlite-vec's own pre-1.0 status (policy in [DECISIONS.md](DECISIONS.md) #4). Documentation-only releases use patch versions because they do not change the public API contract or database layout.
 
 ## Third-Party Attribution
 

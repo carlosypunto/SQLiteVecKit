@@ -30,7 +30,8 @@ public actor VectorStore {
 
     // MARK: - Constants
 
-    /// The version of the bundled sqlite-vec amalgamation, e.g. "v0.1.9".
+    /// The version of the bundled sqlite-vec amalgamation, for example `"v0.1.9"`.
+    /// This is diagnostic information; SQLiteVecKit's own SemVer is independent.
     public static var bundledVecVersion: String {
         String(cString: sqlite_vec_bundled_version())
     }
@@ -104,7 +105,20 @@ public actor VectorStore {
         )
     }
 
-    /// URL-based convenience for the designated path initializer.
+    /// Opens (or creates) the database at `dbURL`.
+    ///
+    /// This is a URL-based convenience for
+    /// ``init(dbPath:dimension:distanceMetric:tableName:metadataByteLimit:lexicalSearch:)``.
+    ///
+    /// - Parameters:
+    ///   - dbURL: File URL of the SQLite database.
+    ///   - dimension: Embedding length; frozen into the file on first creation.
+    ///   - distanceMetric: `.cosine` (default) or `.l2`. Also frozen.
+    ///   - tableName: Restricted to `[A-Za-z_][A-Za-z0-9_]*`.
+    ///   - metadataByteLimit: Per-row cap for `metadata`, in UTF-8 bytes.
+    ///   - lexicalSearch: Whether to maintain the FTS5 companion index.
+    /// - Throws: ``SQLiteError`` for invalid configuration, open failure,
+    ///   sqlite-vec registration failure, or schema mismatch.
     public init(
         dbURL: URL,
         dimension: Int = 512,

@@ -137,6 +137,8 @@ promises. That raised the question of whether SQLiteVecKit can honestly tag a
     `vec0` DDL change), the wrapper takes a **major** bump, regardless of how
     small the upstream change looks.
   - Upstream bumps that preserve both are ordinary minor/patch releases.
+  - Documentation-only changes (comments, README, DocC, snippets) that do not
+    touch the Swift API or on-disk layout ship as patch releases.
 - 1.0 is tagged only after the 0.1.0 API has soaked in a real consuming app.
 
 ### Revisit when

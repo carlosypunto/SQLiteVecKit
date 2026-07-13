@@ -20,6 +20,11 @@ try await store.insertBatch(entries)
 let hits = try await store.searchHybrid(text: question, vector: queryEmbedding, topK: 5)
 ```
 
+Inline symbol documentation, articles, and snippets are versioned with the
+source package. GitHub Pages shows the latest `main` documentation, while
+SwiftPM consumers see the DocC catalog and Quick Help comments from the package
+tag they depend on.
+
 ## Topics
 
 ### Essentials

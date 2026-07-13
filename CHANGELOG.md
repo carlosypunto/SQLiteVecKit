@@ -5,6 +5,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org) (see DECISIONS.md #4 for what the
 wrapper's version promises relative to the bundled sqlite-vec).
 
+## [0.1.1] - 2026-07-13
+
+### Documentation
+- Expanded inline DocC comments across the public API so Xcode Quick Help,
+  autocomplete, generated DocC, and Swift Package Index documentation expose
+  parameter contracts, return values, common errors, and versioning guidance.
+- Documented the release strategy for documentation-only changes: source docs
+  are versioned in git immediately, while consumers pinned to a package version
+  see updated inline docs after the next patch release.
+
 ## [0.1.0] - 2026-07-09
 
 Initial release.
